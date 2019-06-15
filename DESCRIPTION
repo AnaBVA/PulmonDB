@@ -1,6 +1,6 @@
 Package: PulmonDB
 Type: Package
-Title:COPD and IPF transcriptomic data with curated information 
+Title: COPD and IPF transcriptomic data with curated information 
 Version: 0.1.0
 Author: Ana Beatriz Villasenor-Altamirano & Oscar Aldana Assad
 Maintainer: Ana Beatriz Villasenor-Altamirano <aaltamirano@liigh.unam.mx>
