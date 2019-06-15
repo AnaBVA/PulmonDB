@@ -1,0 +1,36 @@
+---
+title: "Introduction to PulmonDB"
+author: 
+- name: Ana Beatriz Villasenor-Altamirano
+  affiliation:
+    - Laboratorio Internacional de Investigacion sobre el Genoma Humano (LIIGH), UNAM
+- name: Oscar Aldana Assad
+  affiliation:
+    - Laboratorio Internacional de Investigacion sobre el Genoma Humano (LIIGH), UNAM
+ 
+
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{intro-PulmonDB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+#library(PulmonDB)
+```
+
+
+
+
+```{r}
+#library(PulmonDB)
+sessionInfo()
+```
