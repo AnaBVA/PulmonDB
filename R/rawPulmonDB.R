@@ -13,24 +13,20 @@ normPulmonDB = function(gene, id){
                    dbname="expdata_hsapi_ipf",
                    host="10.200.0.42")
 
-  sql = 'select \
-  n.value, gn.gene_name,sc.contrast_name \
-  from norm_data AS n \
-  INNER JOIN gene_name as gn ON n.gene_fk=gn.gene_fk \
-  INNER JOIN value_type AS vt ON n.value_type_fk=vt.value_type_id \
-  INNER JOIN sample_contrast AS sc ON n.contrast_fk=sc.contrast_id \
-  INNER JOIN sample AS s ON sc.test_sample_fk=s.sample_id \
-  INNER JOIN experiment AS e ON s.experiment_fk= e.experiment_id
-  WHERE vt.value_type="M" AND  (gn.gene_name IN ("'
-  sqlex ='") ) AND (e.experiment_access_id IN ("'
+  sql = 'select p.probe_name,p.org_probe_id,r.value, a.array_access_id \
+  from raw_data as r \
+  INNER JOIN hybridization AS h ON r.hybridization_fk= h.hybridization_id \
+  INNER JOIN array AS a ON h.array_fk= a.array_id \
+  INNER JOIN experiment AS e ON a.experiment_fk = e.experiment_id \
+  INNER JOIN probe AS p ON r.probe_fk= p.probe_id\
+  WHERE e.experiment_access_id IN ("'
+  #AND p.probe_name IN ("TSPAN6")'
 
 
   finalsql=paste(sql,
-                 paste(gene,collapse='","'),
-                 sqlex,
-                 paste(id,collapse='","'),'"))',
+                 paste(id,collapse='","'),'")',
                  sep = ""
-                 )
+  )
 
 
   rs = dbSendQuery(mydb,finalsql)
