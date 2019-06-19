@@ -1,10 +1,12 @@
-#library(tidyr)
-#library(dbConnect)
+#' library(tidyr)
+#' @library(dbConnect)
+#' @import tidyr
 #library(SummarizedExperiment)
 
 # This gives you homogenized values
 
-normPulmonDB = function(id){
+genesPulmonDB = function(gene, id){
+
 
   mydb = dbConnect(MySQL(),
                    user="guest",
@@ -20,10 +22,13 @@ normPulmonDB = function(id){
   INNER JOIN sample_contrast AS sc ON n.contrast_fk=sc.contrast_id \
   INNER JOIN sample AS s ON sc.test_sample_fk=s.sample_id \
   INNER JOIN experiment AS e ON s.experiment_fk= e.experiment_id
-  WHERE vt.value_type="M" AND (e.experiment_access_id IN ("'
+  WHERE vt.value_type="M" AND  (gn.gene_name IN ("'
+  sqlex ='") ) AND (e.experiment_access_id IN ("'
 
 
   finalsql=paste(sql,
+                 paste(gene,collapse='","'),
+                 sqlex,
                  paste(id,collapse='","'),'"))',
                  sep = ""
   )

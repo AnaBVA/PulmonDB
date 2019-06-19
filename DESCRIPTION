@@ -13,3 +13,8 @@ Suggests:
     rmarkdown,
     BiocStyle
 VignetteBuilder: knitr
+Imports: 
+    RMySQL
+    dplyr
+    tidyr
+    SummarizedExperiments

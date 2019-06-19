@@ -24,10 +24,15 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(devtools)
-#library(PulmonDB)
 #install_github("AnaBVA/PulmonDB")
+library(devtools)
+library(PulmonDB)
+library(RMySQL)
+library(dplyr)
+library(tidyr)
+library(SummarizedExperiment)
 
+genesPulmonDB(c("MMP1","JUND"),c("GSE1122"))
 
 ```
 
