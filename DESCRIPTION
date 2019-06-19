@@ -14,5 +14,8 @@ Suggests:
     BiocStyle
 VignetteBuilder: knitr
 Imports: 
-    dplyr
+    dplyr,
+    RMySQL,
+    tidyr,
+    SummarizedExperiment
 

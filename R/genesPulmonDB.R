@@ -1,12 +1,11 @@
-#' library(tidyr)
-#' @library(dbConnect)
 #' @import tidyr
-#library(SummarizedExperiment)
+#' @import RMySQL
+#' @import dplyr
+#' @import SummarizedExperiment
 
 # This gives you homogenized values
-
+#' @export
 genesPulmonDB = function(gene, id){
-
 
   mydb = dbConnect(MySQL(),
                    user="guest",

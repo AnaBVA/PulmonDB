@@ -35,7 +35,7 @@ rawPulmonDB = function(id){
   data = fetch(rs, n=-1)
   dbDisconnect(mydb)
 
-}
+
   contrast_name_vs_gene_name = data
   data = contrast_name_vs_gene_name
   #contrast_name_vs_gene_name[1] <- NULL

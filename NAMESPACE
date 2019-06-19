@@ -1,1 +1,6 @@
 exportPattern("^[[:alpha:]]+")
+
+import(RMySQL)
+import(tidyr)
+import(dplyr)
+import(SummarizedExperiment)

@@ -4,6 +4,7 @@
 
 # This gives you homogenized values
 
+#' @export
 normPulmonDB = function(id){
 
   mydb = dbConnect(MySQL(),
