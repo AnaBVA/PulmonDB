@@ -9,7 +9,7 @@
 
 # This gives you manually curated annotation for the samples
 #' @export
-annotationPulmonDB = function(gse){
+annotationPulmonDB = function(id){
 
   mydb = dbConnect(MySQL(),
                    user="guest",
@@ -26,7 +26,7 @@ annotationPulmonDB = function(gse){
   INNER JOIN condition_definition as cd ON csr.cond_property_fk = cd.cond_property_id
   INNER JOIN sample as s ON sc.test_sample_fk = s.sample_id
   INNER JOIN experiment as e ON s.experiment_fk = experiment_id
-  WHERE e.experiment_access_id ='
+  WHERE (e.experiment_access_id IN ("'
 
   sqlcon= 'SELECT
   sc.contrast_name, cd.condition_node_name, csc.delta_value, cd.cond_property_id
@@ -36,16 +36,20 @@ annotationPulmonDB = function(gse){
   INNER JOIN sample as s ON sc.test_sample_fk = s.sample_id
   INNER JOIN experiment as e ON s.experiment_fk = experiment_id
   where (csc.delta_value NOT IN (-1))
-  AND e.experiment_access_id ='
+  AND (e.experiment_access_id IN ("'
 
   rs = dbSendQuery(mydb,sql)
   data = fetch(rs, n=-1)
 
-  finalsql=paste(sqlref,'"',gse,'"', sep = "")
+  finalsql=paste(sqlref,
+                 paste(id,collapse='","'),'"))',
+                 sep = "")
   rs = dbSendQuery(mydb,finalsql)
   anno_ref = fetch(rs, n=-1)
 
-  finalsql=paste(sqlcon,'"',gse,'"', sep = "")
+  finalsql=paste(sqlcon,
+                 paste(id,collapse='","'),'"))',
+                 sep = "")
   rs = dbSendQuery(mydb,finalsql)
   anno_con = fetch(rs, n=-1)
 
