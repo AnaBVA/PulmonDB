@@ -1,11 +1,12 @@
 Package: PulmonDB
-Type: Package
+Type: Package to download data from PulmonDB
 Title: COPD and IPF transcriptomic data with curated information 
 Version: 0.1.0
-Author: Ana Beatriz Villasenor-Altamirano & Oscar Aldana Assad
+Authors: Ana Beatriz Villasenor-Altamirano, Oscar Aldana Assad & Alejandra Medina
 Maintainer: Ana Beatriz Villasenor-Altamirano <aaltamirano@liigh.unam.mx>
 Description: This package was created to download PulmonDB data, which contains COPD and IPF transcriptomic experiments manually curated, the data can is accessible as a raw data or as homogenized by COMMAND approach. 
-License: What license is it under?
+Depends: R (>= 3.5.0)
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Suggests: 
@@ -13,9 +14,5 @@ Suggests:
     rmarkdown,
     BiocStyle
 VignetteBuilder: knitr
-Imports: 
-    dplyr,
-    RMySQL,
-    tidyr,
-    SummarizedExperiment
+
 

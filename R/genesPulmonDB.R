@@ -2,6 +2,7 @@
 #' @import RMySQL
 #' @import dplyr
 #' @import SummarizedExperiment
+#' @import PulmonDB
 
 # This gives you homogenized values
 #' @export
@@ -36,12 +37,14 @@ genesPulmonDB = function(gene, id){
   rs = dbSendQuery(mydb,finalsql)
   data = fetch(rs, n=-1)
   dbDisconnect(mydb)
-  contrast_name_vs_gene_name = data
-  contrast_name_vs_gene_name = contrast_name_vs_gene_name %>% spread(contrast_name,value)
+  data = data %>% spread(contrast_name,value)
   #tidyr::spread(df, contrast_name, value)
-  rownames(contrast_name_vs_gene_name) = contrast_name_vs_gene_name$gene_name
-  contrast_name_vs_gene_name = contrast_name_vs_gene_name[,-1]
-  data_class <- SummarizedExperiment(assays=list(values=as.matrix(contrast_name_vs_gene_name)))
+  rownames(data) = data$gene_name
+  data = data[,-1]
+  anno = annotationPulmonDB(id)
+  data_class <- SummarizedExperiment(assays=list(values=as.matrix(data)),
+                                     colData = anno)
+
   return(data_class)
 }
 
