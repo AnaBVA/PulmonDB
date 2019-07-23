@@ -14,6 +14,25 @@ genesPulmonDB = function(gene, id){
                    dbname="expdata_hsapi_ipf",
                    host="10.200.0.42")
 
+  suppressWarnings(if (gene == "all"){
+    sql = 'select \
+  n.value, gn.gene_name,sc.contrast_name \
+    from norm_data AS n \
+    INNER JOIN gene_name as gn ON n.gene_fk=gn.gene_fk \
+    INNER JOIN value_type AS vt ON n.value_type_fk=vt.value_type_id \
+    INNER JOIN sample_contrast AS sc ON n.contrast_fk=sc.contrast_id \
+    INNER JOIN sample AS s ON sc.test_sample_fk=s.sample_id \
+    INNER JOIN experiment AS e ON s.experiment_fk= e.experiment_id
+    WHERE vt.value_type="M" AND (e.experiment_access_id IN ("'
+
+
+    finalsql=paste(sql,
+                   paste(id,collapse='","'),'"))',
+                   sep = ""
+    )
+
+  } else {
+
   sql = 'select \
   n.value, gn.gene_name,sc.contrast_name \
   from norm_data AS n \
@@ -33,6 +52,7 @@ genesPulmonDB = function(gene, id){
                  sep = ""
   )
 
+  })
 
   rs = suppressWarnings(dbSendQuery(mydb,finalsql))
   data = fetch(rs, n=-1)
