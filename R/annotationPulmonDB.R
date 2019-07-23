@@ -3,13 +3,14 @@
 #' @import dplyr
 #' @import SummarizedExperiment
 #' @import ontologyIndex
+#' @import stringr
 #'
 
 
 
 # This gives you manually curated annotation for the samples
 #' @export
-annotationPulmonDB = function(id){
+annotationPulmonDB = function(id,output = 1){
 
   mydb = dbConnect(MySQL(),
                    user="guest",
@@ -151,6 +152,14 @@ annotationPulmonDB = function(id){
 
   data_anno = sapply(colnames(ref), function(x) paste(ref[,x],con[,x],sep = "_vs_"))
 
-  return(data_anno)
+    if (output == 1) {return(data_anno)}
+    if (output == 2) {
 
+      rownames(con) = str_extract(rownames(con),"GSM[0-9]*")
+      rownames(ref) = str_extract(str_extract(rownames(ref),"-GSM[0-9]*"),"GSM[0-9]*")
+      ref = unique(ref)
+
+      l = list(test = con,
+               ref = ref)
+      return(l)}
 }
