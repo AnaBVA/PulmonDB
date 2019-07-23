@@ -39,22 +39,22 @@ annotationPulmonDB = function(id,output = 1){
   where (csc.delta_value NOT IN (-1))
   AND (e.experiment_access_id IN ("'
 
-  rs = dbSendQuery(mydb,sql)
+  rs = suppressWarnings(dbSendQuery(mydb,sql))
   data = fetch(rs, n=-1)
 
   finalsql=paste(sqlref,
                  paste(id,collapse='","'),'"))',
                  sep = "")
-  rs = dbSendQuery(mydb,finalsql)
+  rs = suppressWarnings(dbSendQuery(mydb,finalsql))
   anno_ref = fetch(rs, n=-1)
 
   finalsql=paste(sqlcon,
                  paste(id,collapse='","'),'"))',
                  sep = "")
-  rs = dbSendQuery(mydb,finalsql)
+  rs = suppressWarnings(dbSendQuery(mydb,finalsql))
   anno_con = fetch(rs, n=-1)
 
-  dbDisconnect(mydb)
+  suppressWarnings(dbDisconnect(mydb))
 
   #############
   data = data[-c(185,195,197),]
@@ -64,7 +64,7 @@ annotationPulmonDB = function(id,output = 1){
   family = as.list(df$parent_node_id)
   names(family) = df$cond_property_id
 
-  onto = ontology_index(parents = family)
+  onto = suppressWarnings(ontology_index(parents = family))
 
   fa = data.frame()
 

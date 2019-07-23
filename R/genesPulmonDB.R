@@ -34,9 +34,9 @@ genesPulmonDB = function(gene, id){
   )
 
 
-  rs = dbSendQuery(mydb,finalsql)
+  rs = suppressWarnings(dbSendQuery(mydb,finalsql))
   data = fetch(rs, n=-1)
-  dbDisconnect(mydb)
+  suppressWarnings(dbDisconnect(mydb))
   data = data %>% spread(contrast_name,value)
   #tidyr::spread(df, contrast_name, value)
   rownames(data) = data$gene_name
