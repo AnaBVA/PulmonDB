@@ -137,7 +137,8 @@ annotationPulmonDB = function(id){
 
   sim = colnames(ref)[which(colnames(ref) %in% colnames(con))]
   for (i in 1:length(sim)){
-    ref[!is.na(con[,sim[i]]),sim[i]][ref$contrast_name %in% con$contrast_name,] <- con[!is.na(con[,sim[i]]),sim[i]]
+    c = con[!is.na(con[,sim[i]]),]
+    ref[ref$contrast_name %in% c$contrast_name,sim[i]] <- con[!is.na(con[,sim[i]]),sim[i]]
   }
   #Matrix con annotacion de los test
   con = as.data.frame(ref)
