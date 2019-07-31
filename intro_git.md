@@ -12,7 +12,7 @@ author:
     - Laboratorio Internacional de Investigacion sobre el Genoma Humano (LIIGH), UNAM
  
 
-output: rmarkdown::github_document
+output: BiocStyle::html_document
 vignette: >
   %\VignetteIndexEntry{intro-PulmonDB}
   %\VignetteEngine{knitr::rmarkdown}
@@ -20,28 +20,26 @@ vignette: >
 ---
 
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
-
 # Background
 
 PulmonDB is a gene expression database with Chronic Obstructive Pulmonary Diseases (COPD) and Idiopathic Pulmonary Disease (IPF) experiments. It has homogenized values using individual contrast and manual curated annotation that can be download or accessed by http://pulmondb.liigh.unam.mx. 
 
 
 
-# Setups
 
-```{r message=FALSE}
+# Setups
+```
 library(devtools)
+
+library(PulmonDB)
+
 library(RMySQL)
+
 library(dplyr)
+
 library(tidyr)
+
 library(SummarizedExperiment)
-library(ontologyIndex)
 ```
 
 # Installation
@@ -73,3 +71,4 @@ genesPulmonDB(c("MMP1","JUND"),c("GSE1122"))
 # End
 sessionInfo()
 ```
+

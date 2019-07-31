@@ -37,11 +37,11 @@ PulmonDB is a gene expression database with Chronic Obstructive Pulmonary Diseas
 
 ```{r message=FALSE}
 library(devtools)
-library(PulmonDB)
 library(RMySQL)
 library(dplyr)
 library(tidyr)
 library(SummarizedExperiment)
+library(ontologyIndex)
 ```
 
 # Installation
