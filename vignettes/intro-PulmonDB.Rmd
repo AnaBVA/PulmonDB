@@ -27,26 +27,34 @@ knitr::opts_chunk$set(
 )
 ```
 
+
+
 # Background
 
 PulmonDB is a gene expression database with Chronic Obstructive Pulmonary Diseases (COPD) and Idiopathic Pulmonary Disease (IPF) experiments. It has homogenized values using individual contrast and manual curated annotation that can be download or accessed by http://pulmondb.liigh.unam.mx. 
 
+![](../Figures/pulmondb.jpg)
+
+# About the package 
+
+This package has been created to download the information available in PulmonDB. It uses MySQL queries to access the database by [RMySQL library](https://cran.r-project.org/web/packages/RMySQL/index.html). Then, the data is manipulated with [dplyr](https://dplyr.tidyverse.org/) package from [tidyverse](https://www.tidyverse.org/) to create a `SummarizedExperiment` [object](https://bioconductor.org/packages/3.9/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html) that will contain values and/or curated annotation. 
 
 
 # Setups
 
+
 ```{r message=FALSE}
 library(devtools)
-library(RMySQL)
-library(dplyr)
-library(tidyr)
-library(SummarizedExperiment)
-library(ontologyIndex)
+#library(RMySQL)
+#library(dplyr)
+#library(tidyr)
+#library(SummarizedExperiment)
+#library(ontologyIndex)
 ```
 
 # Installation
 
-The package of PulmonDB can be found in Github and intalled by using ` install_github()`
+The package of PulmonDB can be found in Git hub and insspetalled by using ` install_github()`
 
 ```{r}
 install_github("AnaBVA/PulmonDB")
