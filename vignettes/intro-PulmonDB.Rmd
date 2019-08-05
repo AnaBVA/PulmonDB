@@ -57,7 +57,7 @@ library(devtools)
 The package of PulmonDB can be found in Git hub and insspetalled by using ` install_github()`
 
 ```{r}
-install_github("AnaBVA/PulmonDB")
+install_github("AnaBVA/PulmonDB",force = TRUE)
 library(PulmonDB)
 ```
 

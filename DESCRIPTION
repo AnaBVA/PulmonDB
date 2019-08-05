@@ -1,4 +1,4 @@
-Package: pulmonDB
+Package: PulmonDB
 Title: Package to download data from PulmonDB
 Version: 1.0.1
 Authors@R: 
