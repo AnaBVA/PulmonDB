@@ -1,22 +1,35 @@
-#' @import tidyr
+#' This gives you manually curated annotation for the samples
+#'
+#' Description.
+#'
+#' Details.
+#'
+#' @param output todo
+#' @inheritParams genesPulmonDB
+#'
+#' @export
 #' @import RMySQL
 #' @import dplyr
 #' @import SummarizedExperiment
-#' @import ontologyIndex
-#' @import stringr
+#' @importFrom ontologyIndex ontology_index
+#' @importFrom magrittr "%>%"
+#' @importFrom plyr revalue
+#' @return This is the result.
+#' @examples
+#' ## Example 1
+#' args(annotationPulmonDB)
 #'
+#' @seealso [genesPulmonDB()]
+#' @family leo
 
-
-
-# This gives you manually curated annotation for the samples
-#' @export
 annotationPulmonDB = function(id,output = 1){
-
+  #message("Connecting to PulmonDB")
   mydb = dbConnect(MySQL(),
                    user="guest",
                    password="",
                    dbname="expdata_hsapi_ipf",
                    host="10.200.0.42")
+#132.248.248.114
 
   sql = "SELECT * from condition_definition"
 
@@ -41,6 +54,7 @@ annotationPulmonDB = function(id,output = 1){
 
   rs = suppressWarnings(dbSendQuery(mydb,sql))
   data = fetch(rs, n=-1)
+  #message("Data downloaded...")
 
   finalsql=paste(sqlref,
                  paste(id,collapse='","'),'"))',
@@ -64,13 +78,13 @@ annotationPulmonDB = function(id,output = 1){
   family = as.list(df$parent_node_id)
   names(family) = df$cond_property_id
 
-  onto = suppressWarnings(ontology_index(parents = family))
+  onto = suppressWarnings(ontologyIndex::ontology_index(parents = family))
 
   fa = data.frame()
 
   for (i in 1:length(family)){
     fa[i,"cond"] = names(family)[i]
-    fa[i,"parent"] = paste(get_ancestors(onto,names(family)[i])[2], collapse = ",")
+    fa[i,"parent"] = paste(ontologyIndex::get_ancestors(onto,names(family)[i])[2], collapse = ",")
     #fa[i,"kids"] = paste(get_descendants(onto,names(family)[i]), collapse = ",")
   }
 
@@ -83,15 +97,15 @@ annotationPulmonDB = function(id,output = 1){
 
   for (i in 1:length(fau)){
     k[i,"parent"] = fau[i]
-    k[i,"kids"] = paste(get_descendants(onto,fau[i]), collapse = ",")
+    k[i,"kids"] = paste(ontologyIndex::get_descendants(onto,fau[i]), collapse = ",")
   }
 
   child = vector()
   parent = vector()
 
   for (i in 1:length(fau)){
-    child = c(child,get_descendants(onto,fau[i]))
-    parent = c(parent,rep(fau[i],length(get_descendants(onto,fau[i]))))
+    child = c(child,ontologyIndex::get_descendants(onto,fau[i]))
+    parent = c(parent,rep(fau[i],length(ontologyIndex::get_descendants(onto,fau[i]))))
   }
 
   family = data.frame(child,parent)
@@ -150,16 +164,18 @@ annotationPulmonDB = function(id,output = 1){
   ref = as.data.frame(ref)
   ref = anno.names(ref)
 
-  data_anno = sapply(colnames(ref), function(x) paste(ref[,x],con[,x],sep = "_vs_"))
+  data_anno = sapply(colnames(ref), function(x) paste(con[,x],ref[,x],sep = "_vs_"))
 
     if (output == 1) {return(data_anno)}
     if (output == 2) {
 
-      rownames(con) = str_extract(rownames(con),"GSM[0-9]*")
-      rownames(ref) = str_extract(str_extract(rownames(ref),"-GSM[0-9]*"),"GSM[0-9]*")
+      rownames(con) = stringr::str_extract(rownames(con),"GSM[0-9]*")
+      rownames(ref) = stringr::str_extract(stringr::str_extract(rownames(ref),"-GSM[0-9]*"),"GSM[0-9]*")
       ref = unique(ref)
 
-      l = list(test = con,
-               ref = ref)
+      #l = list(test = con,
+      #         ref = ref)
+      l = rbind(con,ref)
+      message("Annotation downloaded")
       return(l)}
 }

@@ -44,7 +44,7 @@ This package has been created to download the information available in PulmonDB.
 
 
 ```{r message=FALSE}
-library(devtools)
+#library(devtools)
 #library(RMySQL)
 #library(dplyr)
 #library(tidyr)
@@ -57,7 +57,8 @@ library(devtools)
 The package of PulmonDB can be found in Git hub and insspetalled by using ` install_github()`
 
 ```{r}
-install_github("AnaBVA/PulmonDB",force = TRUE)
+# If needed, use install.packages("remotes")
+# remotes::install_github("AnaBVA/PulmonDB")
 library(PulmonDB)
 ```
 
@@ -80,4 +81,8 @@ genesPulmonDB(c("MMP1","JUND"),c("GSE1122"))
 ```{r}
 # End
 sessionInfo()
+
+options(width = 120)
+sessioninfo::session_info()
 ```
+

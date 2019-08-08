@@ -1,12 +1,48 @@
+#' Homogenized values in PulmonDB
+#'
+#' This gives you a S3 object with homogenized values and annotation
+#' per contrast.
+#'
+#' Homogenized values are contrasted with a control reference, we have
+#' performed normalization using RMA for Affymetrix platform and
+#' loess normalization for non-Affymetrix.
+#' Rownames are genes and colnames are contrast (GSMXX1.ch1-vs-GSMXX2.ch1),
+#' the annotation is
+#'GSM18413.ch1-vs-GSM18403.ch1       HEALTHY/CONTROL_vs_EMPHYSEMA
+#'
+#' @param gene A value or character vector with gene names. It also accepts
+#' 'all' for downloading every available gene.
+#' @param id A value or character vector with GSEs (GEO id).
+#'
+#' @export
 #' @import tidyr
 #' @import RMySQL
 #' @import dplyr
 #' @import SummarizedExperiment
-#' @import PulmonDB
-
-# This gives you homogenized values
-#' @export
+#' @examples
+#'
+#' a <- genesPulmonDB(c("MMP1","JUND"), c("GSE1122"))
+#' #annotation
+#' colData(a)
+#' #values
+#' assays(a)$values
+#' assay(a)
+#'all_genes <- genesPulmonDB("all","")
+#'
+#' \dontrun{
+#' ## a comment
+#' genesPulmonDB("MMP1","JUND", c("GSE1122"))
+#' }
+#'
+#' @family pulmondb
+#'
+#'
 genesPulmonDB = function(gene, id){
+
+  value <- NULL
+
+  a <- Sys.time()
+  message("Connecting to PulmonDB")
 
   mydb = dbConnect(MySQL(),
                    user="guest",
@@ -57,7 +93,7 @@ genesPulmonDB = function(gene, id){
   rs = suppressWarnings(dbSendQuery(mydb,finalsql))
   data = fetch(rs, n=-1)
   suppressWarnings(dbDisconnect(mydb))
-  data = data %>% spread(contrast_name,value)
+  data = tidyr::spread(data,contrast_name,value)
   #tidyr::spread(df, contrast_name, value)
   rownames(data) = data$gene_name
   data = data[,-1]
@@ -65,6 +101,12 @@ genesPulmonDB = function(gene, id){
   data_class <- SummarizedExperiment(assays=list(values=as.matrix(data)),
                                      colData = anno)
 
+  message("Time of processing ",Sys.time()-a)
+  genes = paste(gene, collapse = " , ")
+  ids = paste(id, collapse = " , ")
+  message("Data downloaded...")
+  message(paste(length(gene),"Genes:",genes))
+  message(paste(length(id),"GSE:",ids))
   return(data_class)
 }
 
