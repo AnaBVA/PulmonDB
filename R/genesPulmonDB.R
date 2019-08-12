@@ -1,14 +1,17 @@
-#' Homogenized values in PulmonDB
+#' Homogenized values of PulmonDB
 #'
 #' This gives you a S3 object with homogenized values and annotation
 #' per contrast.
 #'
-#' Homogenized values are contrasted with a control reference, we have
+#' Homogenized values are contrasts of a sample reference vs a test
+#' reference in log2. We have
 #' performed normalization using RMA for Affymetrix platform and
 #' loess normalization for non-Affymetrix.
-#' Rownames are genes and colnames are contrast (GSMXX1.ch1-vs-GSMXX2.ch1),
-#' the annotation is
-#'GSM18413.ch1-vs-GSM18403.ch1       EMPHYSEMA_vs_HEALTHY/CONTROL
+#'
+#' Rownames are genes (e.i."MMP7","JUND") and colnames are contrasts
+#' (GSMXX1.ch1-vs-GSMXX2.ch1) in which the first GSM (GSMXX1.ch1) is the
+#' test and the second GSM (GSMXXX2.ch1) is the reference. The
+#' annotation follows annotationPulmonDB()  output, and has the same order.
 #'
 #' @param gene A value or character vector with gene names. It also accepts
 #' 'all' for downloading every available gene.
@@ -102,7 +105,7 @@ genesPulmonDB = function(gene, id){
   #tidyr::spread(df, contrast_name, value)
   rownames(data) = data$gene_name
   data = data[,-1]
-  anno = annotationPulmonDB(id)
+  anno = suppressMessages(annotationPulmonDB(id))
   data_class <- SummarizedExperiment(assays=list(values=as.matrix(data)),
                                      colData = anno)
 

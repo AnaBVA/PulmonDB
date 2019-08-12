@@ -1,11 +1,23 @@
-#' This gives you manually curated annotation for the samples
+#' Annotation from PulmonDB
 #'
-#' Description.
+#' This gives you manually curated annotation for all GSEs available
+#' in PulmonDB.
 #'
 #' Details.
+#' PulmonDB has contrast values (test_condition vs reference), which
+#' curated annotation can be returned using annotationPulmonDB(),
+#' default option is annotation by "contrast" and it will give you
+#' a string with the test and the reference annotation separated by
+#' "_vs_" (EMPHYSEMA_vs_HEALTHY/CONTROL).
 #'
-#' @param output todo
+#' It also has the opption to retrieve annotation per sample using
+#' the condition output = "sample".
+#'
+#'
+#' @param output "contrast" or "sample". Default is "contrast" but it also can
+#' be changed to return annotation per "sample"
 #' @inheritParams genesPulmonDB
+#' @source \url{http://pulmondb.liigh.unam.mx/}
 #'
 #' @export
 #' @import RMySQL
@@ -17,18 +29,22 @@
 #' @return This is the result.
 #' @examples
 #' ## Example 1
-#' args(annotationPulmonDB)
+#' annotationPulmonDB("GSE107426)
 #'
 #' @seealso [genesPulmonDB()]
-#' @family leo
+#' @family pulmonDB
 
-annotationPulmonDB = function(id,output = 1){
+annotationPulmonDB = function(id,output = "contrast"){
   #message("Connecting to PulmonDB")
+  a <- Sys.time()
+
   mydb = dbConnect(MySQL(),
                    user="guest",
                    password="",
                    dbname="expdata_hsapi_ipf",
                    host="10.200.0.42")
+
+  message("Connecting to PulmonDB")
 #132.248.248.114
 
   sql = "SELECT * from condition_definition"
@@ -72,6 +88,7 @@ annotationPulmonDB = function(id,output = 1){
   anno_con = fetch(rs, n=-1)
 
   suppressWarnings(dbDisconnect(mydb))
+
 
   #############
   data = data[-c(185,195,197),]
@@ -167,16 +184,35 @@ annotationPulmonDB = function(id,output = 1){
   ref = as.data.frame(ref)
   ref = anno.names(ref)
 
-  data_anno = sapply(colnames(ref), function(x) paste(con[,x],ref[,x],sep = "_vs_"))
+  data_anno = sapply(colnames(ref),
+                     function(x) paste(con[,x],ref[,x],sep = "_vs_"))
   data_anno <- data.frame(data_anno)
   data_anno[,'gsm'] <- rownames(ref)
-  gse_gpl <- unique(anno_ref[,c("contrast_name","experiment_access_id","platform_name")])
+  gse_gpl <- unique(
+    anno_ref[,c("contrast_name","experiment_access_id","platform_name")])
+  g <- dplyr::group_by(gse_gpl,contrast_name)
+  gse_gpl <- data.frame(summarise(
+    g,
+    first(platform_name),
+    first(experiment_access_id))
+    )
   data_anno <- merge(data_anno,gse_gpl,by.x="gsm",by.y="contrast_name")
   rownames(data_anno) <- data_anno[,"gsm"]
+  data_anno <- data_anno[,-1]
+  colnames(data_anno)[ncol(data_anno)] <- "GSE"
+  colnames(data_anno)[ncol(data_anno)-1] <- "PLATFORM"
+
+  message("Time of processing ",Sys.time()-a)
+  message("Annotation downloaded")
+  message(paste(length(id),"GSE:",ids))
+  cn <- paste(colnames(data_anno),collapse = " , ")
+  message(paste(dim(data_anno)[2],"Features annotated:",cn))
 
 
-    if (output == 1) {return(data_anno)}
-    if (output == 2) {
+    if (output == "contrast") {
+      message(paste(dim(data_anno)[1],"Contrasts"))
+      return(data_anno)}
+    if (output == "sample") {
 
       rownames(con) = stringr::str_extract(rownames(con),"GSM[0-9]*")
       rownames(ref) = stringr::str_extract(stringr::str_extract(rownames(ref),"-GSM[0-9]*"),"GSM[0-9]*")
@@ -184,7 +220,11 @@ annotationPulmonDB = function(id,output = 1){
 
       #l = list(test = con,
       #         ref = ref)
-      l = rbind(con,ref)
-      message("Annotation downloaded")
-      return(l)}
+      data_anno = rbind(con,ref)
+
+      message(paste(dim(data_anno)[1],"Samples"))
+      return(data_anno)}
+
+
+
 }

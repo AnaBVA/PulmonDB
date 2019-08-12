@@ -2,20 +2,24 @@
 % Please edit documentation in R/annotationPulmonDB.R
 \name{annotationPulmonDB}
 \alias{annotationPulmonDB}
-\title{This gives you manually curated annotation for the samples}
+\title{Annotation from PulmonDB}
+\source{
+\url{http://pulmondb.liigh.unam.mx/}
+}
 \usage{
-annotationPulmonDB(id, output = 1)
+annotationPulmonDB(id, output = "contrast")
 }
 \arguments{
 \item{id}{A value or character vector with GSEs (GEO id).}
 
-\item{output}{todo}
+\item{output}{"contrast" or "sample". Default is "contrast" but it also can
+be changed to return annotation per "sample"}
 }
 \value{
 This is the result.
 }
 \description{
-Description.
+This gives you manually curated annotation for GSE available in PulmonDB.
 }
 \details{
 Details.

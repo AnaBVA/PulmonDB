@@ -2,7 +2,7 @@
 % Please edit documentation in R/genesPulmonDB.R
 \name{genesPulmonDB}
 \alias{genesPulmonDB}
-\title{Homogenized values in PulmonDB}
+\title{Homogenized values of PulmonDB}
 \usage{
 genesPulmonDB(gene, id)
 }
@@ -17,22 +17,31 @@ This gives you a S3 object with homogenized values and annotation
 per contrast.
 }
 \details{
-Homogenized values are contrasted with a control reference, we have
+Homogenized values are contrasts of a sample reference vs a test
+reference in log2. We have
 performed normalization using RMA for Affymetrix platform and
 loess normalization for non-Affymetrix.
-Rownames are genes and colnames are contrast (GSMXX1.ch1-vs-GSMXX2.ch1),
-the annotation is
-GSM18413.ch1-vs-GSM18403.ch1       EMPHYSEMA_vs_HEALTHY/CONTROL
+
+Rownames are genes (e.i."MMP7","JUND") and colnames are contrasts
+(GSMXX1.ch1-vs-GSMXX2.ch1) in which the first GSM (GSMXX1.ch1) is the
+test and the second GSM (GSMXXX2.ch1) is the reference. The
+annotation follows annotationPulmonDB()  output, and has the same order
+EMPHYSEMA_vs_HEALTHY/CONTROL
 }
 \examples{
 
-a <- genesPulmonDB(c("MMP1","JUND"), c("GSE1122"))
+a <- genesPulmonDB(c("MMP1","JUND"), c("GSE1122","GSE101286"))
 #annotation
 colData(a)
 #values
 assays(a)$values
 assay(a)
-all_genes <- genesPulmonDB("all","")
+#All genes
+all_genes <- genesPulmonDB("all","GSE1122")
+#Value of MMP7
+gse <- c("GSE32537","GSE21369","GSE24206","GSE94060","GSE72073","GSE35145","GSE52453")
+mmp7 <- genesPulmonDB("MMP7",gse)
+
 
 \dontrun{
 ## a comment
