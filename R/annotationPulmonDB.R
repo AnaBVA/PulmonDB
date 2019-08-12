@@ -29,7 +29,10 @@
 #' @return This is the result.
 #' @examples
 #' ## Example 1
-#' annotationPulmonDB("GSE107426)
+#' annotationPulmonDB("GSE27536")
+#' ## Annotation per sample
+#' annotationPulmonDB(c("GSE101286","GSE1122"),"sample")
+#'
 #'
 #' @seealso [genesPulmonDB()]
 #' @family pulmonDB
@@ -204,6 +207,7 @@ annotationPulmonDB = function(id,output = "contrast"){
 
   message("Time of processing ",Sys.time()-a)
   message("Annotation downloaded")
+  ids = paste(id, collapse = " , ")
   message(paste(length(id),"GSE:",ids))
   cn <- paste(colnames(data_anno),collapse = " , ")
   message(paste(dim(data_anno)[2],"Features annotated:",cn))
