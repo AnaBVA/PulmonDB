@@ -7,7 +7,7 @@
 annotationPulmonDB(id, output = 1)
 }
 \arguments{
-\item{id}{A GEO id.}
+\item{id}{A value or character vector with GSEs (GEO id).}
 
 \item{output}{todo}
 }
@@ -27,7 +27,5 @@ args(annotationPulmonDB)
 }
 \seealso{
 [genesPulmonDB()]
-
-Other leo: \code{\link{genesPulmonDB}}
 }
 \concept{leo}

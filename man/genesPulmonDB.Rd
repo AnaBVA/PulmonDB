@@ -7,17 +7,22 @@
 genesPulmonDB(gene, id)
 }
 \arguments{
-\item{gene}{A character vector with gene ids.}
+\item{gene}{A value or character vector with gene names. It also accepts
+'all' for downloading every available gene.}
 
-\item{id}{A GEO id.}
+\item{id}{A value or character vector with GSEs (GEO id).}
 }
 \description{
 This gives you a S3 object with homogenized values and annotation
 per contrast.
 }
 \details{
-Homogenized values are contrasted with a control reference,
-annotation will be have
+Homogenized values are contrasted with a control reference, we have
+performed normalization using RMA for Affymetrix platform and
+loess normalization for non-Affymetrix.
+Rownames are genes and colnames are contrast (GSMXX1.ch1-vs-GSMXX2.ch1),
+the annotation is
+GSM18413.ch1-vs-GSM18403.ch1       EMPHYSEMA_vs_HEALTHY/CONTROL
 }
 \examples{
 
@@ -27,14 +32,12 @@ colData(a)
 #values
 assays(a)$values
 assay(a)
+all_genes <- genesPulmonDB("all","")
 
 \dontrun{
 ## a comment
-genesPulmonDB(c("MMP1","JUND"), c("GSE1122"))
+genesPulmonDB("MMP1","JUND", c("GSE1122"))
 }
 
 }
-\seealso{
-Other leo: \code{\link{annotationPulmonDB}}
-}
-\concept{leo}
+\concept{pulmondb}

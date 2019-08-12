@@ -8,7 +8,7 @@
 #' loess normalization for non-Affymetrix.
 #' Rownames are genes and colnames are contrast (GSMXX1.ch1-vs-GSMXX2.ch1),
 #' the annotation is
-#'GSM18413.ch1-vs-GSM18403.ch1       HEALTHY/CONTROL_vs_EMPHYSEMA
+#'GSM18413.ch1-vs-GSM18403.ch1       EMPHYSEMA_vs_HEALTHY/CONTROL
 #'
 #' @param gene A value or character vector with gene names. It also accepts
 #' 'all' for downloading every available gene.
@@ -21,13 +21,18 @@
 #' @import SummarizedExperiment
 #' @examples
 #'
-#' a <- genesPulmonDB(c("MMP1","JUND"), c("GSE1122"))
+#' a <- genesPulmonDB(c("MMP1","JUND"), c("GSE1122","GSE101286"))
 #' #annotation
 #' colData(a)
 #' #values
 #' assays(a)$values
 #' assay(a)
-#'all_genes <- genesPulmonDB("all","")
+#' #All genes
+#' all_genes <- genesPulmonDB("all","GSE1122")
+#' #Value of MMP7
+#' gse <- c("GSE32537","GSE21369","GSE24206","GSE94060","GSE72073","GSE35145","GSE52453")
+#' mmp7 <- genesPulmonDB("MMP7",gse)
+#'
 #'
 #' \dontrun{
 #' ## a comment

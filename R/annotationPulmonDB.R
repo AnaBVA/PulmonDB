@@ -34,12 +34,15 @@ annotationPulmonDB = function(id,output = 1){
   sql = "SELECT * from condition_definition"
 
   sqlref = 'SELECT
-  sc.contrast_name, cd.condition_node_name, csr.value,  cd.cond_property_id
+  sc.contrast_name, cd.condition_node_name, csr.value,  cd.cond_property_id,
+  e.experiment_access_id, p.platform_name
   from sample_contrast as sc
   INNER JOIN condition_specification_of_ref_sample as csr ON sc.ref_sample_fk = csr.sample_fk
   INNER JOIN condition_definition as cd ON csr.cond_property_fk = cd.cond_property_id
   INNER JOIN sample as s ON sc.test_sample_fk = s.sample_id
-  INNER JOIN experiment as e ON s.experiment_fk = experiment_id
+  INNER JOIN experiment as e ON s.experiment_fk = e.experiment_id
+  INNER JOIN array as a ON e.experiment_id = a.experiment_fk
+  INNER JOIN platform as p ON a.platform_fk = p.platform_id
   WHERE (e.experiment_access_id IN ("'
 
   sqlcon= 'SELECT
@@ -165,6 +168,12 @@ annotationPulmonDB = function(id,output = 1){
   ref = anno.names(ref)
 
   data_anno = sapply(colnames(ref), function(x) paste(con[,x],ref[,x],sep = "_vs_"))
+  data_anno <- data.frame(data_anno)
+  data_anno[,'gsm'] <- rownames(ref)
+  gse_gpl <- unique(anno_ref[,c("contrast_name","experiment_access_id","platform_name")])
+  data_anno <- merge(data_anno,gse_gpl,by.x="gsm",by.y="contrast_name")
+  rownames(data_anno) <- data_anno[,"gsm"]
+
 
     if (output == 1) {return(data_anno)}
     if (output == 2) {
