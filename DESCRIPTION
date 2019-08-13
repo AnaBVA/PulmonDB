@@ -39,5 +39,7 @@ Suggests:
     sessioninfo,
     BiocStyle,
     knitr,
-    rmarkdown
+    rmarkdown,
+    ggplot2,
+    SummarizedExperiment
 VignetteBuilder: knitr
