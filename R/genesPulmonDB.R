@@ -103,7 +103,7 @@ genesPulmonDB = function(gene, id){
   suppressWarnings(dbDisconnect(mydb))
   data = tidyr::spread(data,contrast_name,value)
   #tidyr::spread(df, contrast_name, value)
-  rownames(data) = data$gene_name
+  rownames(data) = data$genes_name
   data = data[,-1]
   anno = suppressMessages(annotationPulmonDB(id))
   data_class <- SummarizedExperiment(assays=list(values=as.matrix(data)),
@@ -115,6 +115,7 @@ genesPulmonDB = function(gene, id){
   message("Data downloaded...")
   message(paste(length(gene),"Genes:",genes))
   message(paste(length(id),"GSE:",ids))
+
   return(data_class)
 }
 

@@ -13,6 +13,10 @@
 #' It also has the opption to retrieve annotation per sample using
 #' the condition output = "sample".
 #'
+#' Sometimes the feature annotated can be empty when two o more
+#' GSEs are downloaded. Each GSE has different
+#' annotation and not allways all annotation features are available.
+#'
 #'
 #' @param output "contrast" or "sample". Default is "contrast" but it also can
 #' be changed to return annotation per "sample"
@@ -28,8 +32,9 @@
 #' @importFrom plyr revalue
 #' @return This is the result.
 #' @examples
-#' ## Example 1
+#' ## Annotation per contrast
 #' annotationPulmonDB("GSE27536")
+#' annotationPulmonDB("GSE27536","contrast")
 #' ## Annotation per sample
 #' annotationPulmonDB(c("GSE101286","GSE1122"),"sample")
 #'

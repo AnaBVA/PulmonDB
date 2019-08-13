@@ -4,10 +4,10 @@
 \alias{genesPulmonDB}
 \title{Homogenized values of PulmonDB}
 \usage{
-genesPulmonDB(gene, id)
+genesPulmonDB(genes, id)
 }
 \arguments{
-\item{gene}{A value or character vector with gene names. It also accepts
+\item{genes}{A value or character vector with gene names. It also accepts
 'all' for downloading every available gene.}
 
 \item{id}{A value or character vector with GSEs (GEO id).}
@@ -25,8 +25,7 @@ loess normalization for non-Affymetrix.
 Rownames are genes (e.i."MMP7","JUND") and colnames are contrasts
 (GSMXX1.ch1-vs-GSMXX2.ch1) in which the first GSM (GSMXX1.ch1) is the
 test and the second GSM (GSMXXX2.ch1) is the reference. The
-annotation follows annotationPulmonDB()  output, and has the same order
-EMPHYSEMA_vs_HEALTHY/CONTROL
+annotation follows annotationPulmonDB()  output, and has the same order.
 }
 \examples{
 
