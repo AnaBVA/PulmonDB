@@ -54,9 +54,9 @@ genesPulmonDB = function(gene, id){
 
   mydb = dbConnect(MySQL(),
                    user="guest",
-                   password="",
+                   password="pulmonDBguest",
                    dbname="expdata_hsapi_ipf",
-                   host="10.200.0.42")
+                   host="132.248.248.114")
 
   suppressWarnings(if (gene == "all"){
     sql = 'select \
