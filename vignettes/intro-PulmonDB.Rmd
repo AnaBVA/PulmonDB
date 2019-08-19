@@ -53,7 +53,8 @@ The package of PulmonDB can be found in Git hub and installed using ` install_gi
 
 ```{r}
 # If needed, use install.packages("remotes")
-# remotes::install_github("AnaBVA/PulmonDB")
+# remotes::install_github("AnaBVA/PulmonDB",build_vignettes = TRUE)
+# vignette("intro-PulmonDB")
 library(PulmonDB)
 ```
 
