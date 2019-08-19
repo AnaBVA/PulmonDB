@@ -4,10 +4,10 @@
 \alias{genesPulmonDB}
 \title{Homogenized values of PulmonDB}
 \usage{
-genesPulmonDB(genes, id)
+genesPulmonDB(gene, id)
 }
 \arguments{
-\item{genes}{A value or character vector with gene names. It also accepts
+\item{gene}{A value or character vector with gene names. It also accepts
 'all' for downloading every available gene.}
 
 \item{id}{A value or character vector with GSEs (GEO id).}
