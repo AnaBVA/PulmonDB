@@ -34,7 +34,7 @@ knitr::opts_chunk$set(
 
 PulmonDB is a gene expression database with Chronic Obstructive Pulmonary Diseases (COPD) and Idiopathic Pulmonary Disease (IPF) experiments. It has homogenized values using individual contrast and manual curated annotation that can be download or accessed by http://pulmondb.liigh.unam.mx. 
 
-![](./Figures/pulmondb.jpg)
+![](/vignette/Figures/pulmondb.jpg)
 
 # About the package 
 
@@ -54,7 +54,8 @@ The package of PulmonDB can be found in Git hub and installed using ` install_gi
 
 ```{r}
 # If needed, use install.packages("remotes")
-# remotes::install_github("AnaBVA/PulmonDB")
+# remotes::install_github("AnaBVA/PulmonDB",build_vignettes = TRUE)
+# vignette("intro-PulmonDB")
 library(PulmonDB)
 ```
 
