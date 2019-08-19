@@ -30,11 +30,11 @@ annotation follows annotationPulmonDB()  output, and has the same order.
 \examples{
 
 a <- genesPulmonDB(c("MMP1","JUND"), c("GSE1122","GSE101286"))
-#annotation
-colData(a)
-#values
-assays(a)$values
-assay(a)
+## annotation
+#colData(a)
+## values
+#assays(a)$values
+#assay(a)
 #All genes
 all_genes <- genesPulmonDB("all","GSE1122")
 #Value of MMP7
