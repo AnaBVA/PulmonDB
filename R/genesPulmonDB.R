@@ -103,7 +103,7 @@ genesPulmonDB = function(gene, id){
   suppressWarnings(dbDisconnect(mydb))
   data = tidyr::spread(data,contrast_name,value)
   #tidyr::spread(df, contrast_name, value)
-  rownames(data) = data$genes_name
+  rownames(data) = data$gene_name
   data = data[,-1]
   anno = suppressMessages(annotationPulmonDB(id))
   data_class <- SummarizedExperiment(assays=list(values=as.matrix(data)),
