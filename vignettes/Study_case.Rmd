@@ -1,0 +1,319 @@
+---
+title: "Study_case"
+output: html_document
+---
+
+```{r pressure, echo=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggrepel)
+library(plotly)
+library(ggpubr)
+library(limma)
+library(PulmonDB)
+
+#setwd("~/Documents/Doctorado/COPD_analysis")
+
+############# Data
+
+norm_m <- read.csv("~/Documents/Doctorado/COPD_analysis/data/April_2019/2_pivotdata.txt",header=TRUE)
+row.names(norm_m) <- norm_m[,1]
+norm_m <- norm_m[,-1]
+norm_data <- t(norm_m)
+
+norm_data <- as.data.frame(norm_data)
+rownames(norm_data) <- gsub(".vs.","-vs-", rownames(norm_data))
+
+gse <- read.delim("~/Documents/Doctorado/COPD_analysis/data/April_2019/gse_gpl.txt", header = TRUE)
+rownames(gse) <- gse$contrast_name
+rownames(gse) <- gsub(".vs.","-vs-", rownames(gse))
+
+c.anno <- read.delim("~/Documents/Doctorado/COPD_analysis/data/April_2019/contrast_conditions.txt")
+r.anno <- read.delim("~/Documents/Doctorado/COPD_analysis/data/April_2019/ref_conditions.txt")
+
+
+#Select 
+c.disease <- c.anno[which(c.anno$parent_node_id == 87),] 
+r.disease <- r.anno[which(r.anno$parent_node_id == 87),] 
+
+apheno <- merge(c.disease[,c(1,2)],r.disease[,c(1,2)], by = 1, all = TRUE)
+colnames(apheno) <- c("contrast_name","test","ref")
+
+bad_annot <- filter(apheno, is.na(apheno$ref)) 
+#unique(gse[gse[,1] %in% bad_annot[,1],2])
+
+apheno[is.na(apheno$ref),"ref"] <- "HEALTHY/CONTROL"
+pheno <- apply(apheno,1, function(i) {replace(i,is.na(i["test"]),i["ref"])})
+pheno <- data.frame(t(pheno))
+pheno$contrast_name <- apheno$contrast_name
+
+#H <- filter(pheno, ref == "HEALTHY/CONTROL"| ref=="MATCH_TISSUE_CONTROL"| ref=="NORMAL_RELATIVE")
+#CH.H <- filter(H,test=="COPD"| test=="AAD"| test=="EMPHYSEMA" | test=="HEALTHY/CONTROL"| test =="MATCH_TISSUE_CONTROL"| test=="NORMAL_RELATIVE")
+
+CH.H <- pheno %>%
+  filter(ref == "HEALTHY/CONTROL") %>% #| ref == "MATCH_TISSUE_CONTROL") %>%
+  filter(test=="COPD"| test=="AAD"| test=="EMPHYSEMA" | test=="HEALTHY/CONTROL"| test == "MATCH_TISSUE_CONTROL" | test == "IPF")
+
+H_H <- filter(CH.H,test=="HEALTHY/CONTROL" | test == "MATCH_TISSUE_CONTROL")
+C_H <- filter(CH.H,test=="COPD"| test=="AAD"| test=="EMPHYSEMA" | test == "IPF")
+
+ref_anno <- r.anno %>%
+  filter(r.anno[,1] %in% CH.H[,1])
+ref_anno[,3] <- TRUE
+
+ref_anno <- spread(ref_anno,condition_node_name, 3, fill = FALSE)
+
+sample_type <- ref_anno[,-c(2,3,7,11,12,13,14,15,17,18,19,20,21,24,25,28,29)]
+
+sample_type1 <- sample_type %>%
+  gather(key = type, value= B, -contrast_name) %>%
+  filter(B == TRUE)
+
+TISSUE <- ref_anno %>%
+  filter(LUNG_BIOPSY==TRUE) %>%
+  select(contrast_name)
+
+TISSUE <- CH.H %>%
+  filter(ref=="HEALTHY/CONTROL" | ref == "MATCH_TISSUE_CONTROL") %>%
+  filter(contrast_name %in% TISSUE[,1])
+
+##Informacion de las referencias
+ref_tissue <- r.anno %>%
+  filter(r.anno[,1] %in% CH.H[,1],
+         r.anno[,1] %in% TISSUE[,1])
+
+ref_tissue[,3] <- TRUE
+
+ref_tissue <- spread(ref_tissue,condition_node_name, 3, fill = FALSE)
+
+##Informacion de los test
+test_tissue <- c.anno %>%
+  filter(c.anno[,1] %in% CH.H[,1],
+         c.anno[,1] %in% TISSUE[,1])
+
+test_tissue[,3] <- TRUE
+
+test_tissue <- spread(test_tissue,condition_node_name, 3, fill = FALSE)
+
+pheno_tissue <- filter(CH.H, CH.H[,1] %in% TISSUE[,1])
+pheno_tissue$test <- replace(pheno_tissue$test,pheno_tissue$test=="AAD","COPD")
+pheno_tissue$test <- replace(pheno_tissue$test,pheno_tissue$test=="EMPHYSEMA","COPD")
+pheno_tissue <- pheno_tissue[!duplicated(pheno_tissue),]
+
+nsamples_tissue <- summary(pheno_tissue[,2])
+nsamples_tissue <- as.data.frame(nsamples_tissue[nsamples_tissue != 0])
+colnames(nsamples_tissue) <- "count"
+nsamples_tissue$d <- factor(rownames(nsamples_tissue))
+
+
+cmTISSUE <- norm_data[which(rownames(norm_data) %in% TISSUE[,1]),]
+
+norm_COPD <- (cmTISSUE)
+#norm_COPD <- norm_COPD[as.character(rPBMC$contrast_name),]
+
+#quitar contrastes 
+s <- summary(rowSums(is.na(norm_COPD)))
+data_COPD <- norm_COPD[rowSums(is.na(norm_COPD)) <= s["3rd Qu."],]
+
+#Removing genes with NA 
+data_COPD <- data_COPD[,colSums(is.na(data_COPD)) == 0]
+#data_COPD <- replace(data_COPD,is.na(data_COPD),0)
+
+cm190 <- data_COPD
+
+cm190 <- t(cm190)
+
+
+##utilizando nuevo diseño experimental en limma
+# https://bioconductor.org/packages/devel/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
+
+gse_tissue <- filter(gse,gse[,1] %in% colnames(cm190))
+gse_tissue <- merge(pheno_tissue, gse_tissue, by =1)
+gse_tissue$test <- factor(gse_tissue$test, levels = c("COPD","HEALTHY/CONTROL","MATCH_TISSUE_CONTROL","IPF"))
+
+
+gsetm <- gse_tissue
+gsetm$test <- as.character(gsetm$test)
+gsetm$test <- gsub("HEALTHY/CONTROL","CONTROL",gsetm$test)
+gsetm$d <- gsetm$test
+gsetm$d <- gsub("COPD","LD",gsetm$d)
+gsetm$d <- gsub("IPF","LD",gsetm$d)
+
+gsetm$contrast_name <- factor(as.character(gsetm$contrast_name))
+gsetm$experiment_access_id <- factor(as.character(gsetm$experiment_access_id))
+gsetm$test <- factor(gsetm$test)
+gsetm$d <- factor(gsetm$d)
+
+###########################
+
+#designS <- model.matrix(~0 +d + experiment_access_id,gsetm)
+designDE <- model.matrix(~0 + test+experiment_access_id ,gsetm)
+
+
+#fitS <- lmFit(cm190,designS)
+fitDE <- lmFit(cm190,designDE)
+
+cont.matrixDE <- makeContrasts(COPDvsIPF=testCOPD-testIPF,
+                               COPDvsH =testCOPD-testCONTROL,
+                               IPFvsH = testIPF-testCONTROL,
+                               COPDandIPFvsH = (testCOPD + testIPF)/2 -testCONTROL,
+                               levels = designDE)
+
+#cont.matrixDE <- makeContrasts(P3=testCOPD-testIPF,
+                              # levels = designDE)
+fit2DE <- contrasts.fit(fitDE,cont.matrixDE)
+fit3DE <- eBayes(fit2DE)
+dtDE <- decideTests(fit3DE)
+summary(dtDE)
+
+genesCOPDvsH <- topTable(fit3DE,coef=2,n = Inf, adjust="fdr", p = 0.005, sort.by = "B")
+genesIPFvsH <- topTable(fit3DE,coef=3,n = Inf, adjust="fdr", p = 0.005, sort.by = "B")
+
+genesSIMILAR <-  topTable(fit3DE,coef=4,n = 20, adjust="fdr", p = 0.005, sort.by = "logFC")
+genesSIMILAR_p <-  topTable(fit3DE,coef=4, n = Inf,adjust="fdr", p = 0.005, sort.by = "logFC")
+genesSIMILAR_all <- topTable(fit3DE,coef=4,n = Inf, adjust="fdr", sort.by = "logFC")
+
+
+genesCOPDvsIPF <- topTable(fit3DE,coef=1,n = 20, adjust="fdr", p = 0.005, sort.by = "logFC")
+genesCOPDvsIPF_p <- topTable(fit3DE,coef=1,n = Inf, adjust="fdr", p = 0.005, sort.by = "logFC")
+genesCOPDvsIPF_all <- topTable(fit3DE,coef=1,n = Inf, adjust="fdr", sort.by = "logFC")
+
+
+
+#write.csv(genesCOPDvsIPF,"data_output/DE_COPDvsIPF_v2.txt", quote = FALSE)
+#write.csv(genesSIMILAR,"data_output/DE_SIMILAR_v2.txt", quote = FALSE)
+
+#write.csv(genesCOPDvsIPF_p,"data_output/DE_COPDvsIPF_all_v2.txt", quote = FALSE)
+#write.csv(genesSIMILAR_p,"data_output/DE_SIMILAR_all_v2.txt", quote = FALSE)
+
+paste(rownames(genesCOPDvsIPF),collapse = ",")
+paste(rownames(genesSIMILAR),collapse = ",")
+
+
+## es el fit3 de COPDvsIPf y el de fit3 de SIMMILAR
+
+
+dt <- cbind(decideTests(fit3DE[,"COPDvsIPF"]),decideTests(fit3DE[,"COPDandIPFvsH"]))
+ds <- cbind(decideTests(fit3DE[,"COPDvsH"]),decideTests(fit3DE[,"IPFvsH"]))
+
+
+colnames(dt) <- c("Similar genes", "DE genes")
+
+pdf("fig_output/VennSimilarDE.pdf")
+vennDiagram(dt, circle.col=c("#09b7a2", "#096cb7"))
+dev.off()
+
+summary(decideTests(fit3DE))
+
+###Volcano limma plot
+
+#SIMILAR
+red_genesS <- topTable(fit3DE,coef=4,n = Inf, adjust="fdr", p = 0.005, sort.by = "logFC")
+
+gS <-  ggplot(data=genesSIMILAR_all, aes(x=logFC, y=-log10(adj.P.Val))) + 
+  geom_point(alpha=0.7, size=1.75) +
+  xlab("log(Fold-Change)") + 
+  ylab("-log10 FDR(p-value)") +
+  ggtitle("Similar genes between COPD and IPF") +
+  geom_point(color=ifelse(rownames(genesSIMILAR_all) %in% rownames(red_genesS), "red","black")) +
+  #geom_vline(xintercept=1, linetype="dashed", color = "red") +
+  #geom_vline(xintercept = -1, linetype="dashed", color = "red") +
+  geom_hline(yintercept = -log10(0.005), linetype="dashed", color = "red") +
+  geom_text_repel(data = genesSIMILAR, 
+                  aes(genesSIMILAR$logFC, -log10(genesSIMILAR$adj.P.Val), label = rownames(genesSIMILAR)),
+                  check_overlap = TRUE,
+                  size = 3,
+                  position = position_dodge(0.9)
+  ) +
+  theme_bw(24)
+
+#DE
+red_genesDE <- topTable(fit3DE,coef=1,n = Inf, adjust="fdr", p = 0.005, sort.by = "logFC")
+
+gDE <-  ggplot(data=genesCOPDvsIPF_all, aes(x=logFC, y=-log10(adj.P.Val))) + 
+  geom_point(alpha=0.7, size=1.75) +
+  xlab("log(Fold-Change)") + 
+  ylab("-log10 FDR(p-value)") +
+  ggtitle("DE genes between COPD and IPF") +
+  geom_point(color=ifelse(rownames(genesCOPDvsIPF_all) %in% rownames(red_genesDE), "red","black")) +
+  #geom_vline(xintercept=1, linetype="dashed", color = "red") +
+  #geom_vline(xintercept = -1, linetype="dashed", color = "red") +
+  geom_hline(yintercept = -log10(0.005), linetype="dashed", color = "red") +
+  geom_text_repel(data = genesCOPDvsIPF, 
+                  aes(genesCOPDvsIPF$logFC, -log10(genesCOPDvsIPF$adj.P.Val), label = rownames(genesCOPDvsIPF)),
+                  check_overlap = TRUE,
+                  size = 3,
+                  position = position_dodge(0.9)
+  ) +
+  theme_bw(24)
+
+
+
+### Put together the volcano plots 
+pdf("fig_output/volcano_plots.pdf",height = 8, width = 18 )
+ggarrange(gDE,gS,
+          ncol = 2,
+          nrow = 1,
+          align = "hv"
+)
+dev.off()
+
+
+
+
+###PCA
+library(ggfortify)
+
+#cm0 <- replace(cm5,is.na(cm5),0)
+cm0 <- t(cm190)
+#cm0 <- t(cm190[rownames(genesCOPDvsIPF),])
+
+e <- prcomp(cm0)
+
+df <- merge(e$x[,1:3], pheno_tissue, by.x= 0, by.y=1, all.x=TRUE)
+df<- merge(df, gse, by.x = 1, by.y = 0)
+df <- merge(df,sample_type1, by = 1,all.x = TRUE)
+
+
+#d <- merge(df,sample[,-3], by = 1, all.x = TRUE)
+#d <- cbind(d,gseid[d$Row.names,2])
+
+#p3 <- plot_ly(df, x = ~PC2, y = ~PC3, color = ~test)
+
+ggplot(data = df, aes(x=PC1,y=PC2,colour= test),frame = TRUE,frame.type = 'norm') +
+  scale_color_manual(values = c("#930404", "#3f7ac6","#0dba79")) +
+  #geom_point(aes(shape=experiment_access_id, colour=test, size= 2)) +
+  #scale_shape_manual(values=seq(1:length(unique(df$experiment_access_id))))+
+  geom_point(alpha=0.7, size=3) +
+  theme_bw(24)
+
+
+
+############### TSNE
+#install.packages('Rtsne')
+library(Rtsne)
+
+tsne <- Rtsne(as.matrix(cm0), dims = 3, check_duplicates = FALSE)
+
+tsne_data <- data.frame(tsne$Y)
+rownames(tsne_data) <- rownames(data_COPD)
+tsne_data <- merge(tsne_data,df,by.x = 0, by.y = 1, all.x = TRUE)
+#tsne_data <- merge(tsne_data,sample[,-3], by= 1, all.x = TRUE)
+#tsne_data <- cbind(tsne_data,gseid[tsne_data$Row.names,2])
+
+#p4 <- plot_ly(tsne_data, x = ~X3, y = ~X2, color = ~test, type = 'scatter') 
+
+ggplot(data = tsne_data, aes(x=X1,y=X2,colour= test),frame = TRUE,frame.type = 'norm') +
+  scale_color_manual(values = c("#930404", "#3f7ac6","#0dba79")) +
+  #geom_point(aes(shape=experiment_access_id, colour=test, size= 2)) +
+  #scale_shape_manual(values=seq(1:length(unique(df$experiment_access_id))))+
+  geom_point(alpha=0.7, size=3) +
+  theme_bw(24)
+
+
+
+```
+
+
+
+
