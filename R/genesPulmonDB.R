@@ -108,10 +108,12 @@ genesPulmonDB = function(gene, id){
 
   #data = tidyr::spread(data,contrast_name,value)
   data <- data.frame(data)
+  genename = data[,1]
   data = data[,-1]
+  rownames(data) = genename
   colnames(data) <- gsub(".vs.","-vs-", colnames(data))
   anno = suppressMessages(annotationPulmonDB(id))
-  data_class <- SummarizedExperiment(assays=as.matrix(data),
+  data_class <- SummarizedExperiment(assays = as.matrix(data),
                                      colData = anno)
 
   message("Time of processing ",Sys.time()-a)
