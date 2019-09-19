@@ -101,12 +101,17 @@ genesPulmonDB = function(gene, id){
   rs = suppressWarnings(dbSendQuery(mydb,finalsql))
   data = fetch(rs, n=-1)
   suppressWarnings(dbDisconnect(mydb))
-  data = tidyr::spread(data,contrast_name,value)
-  #tidyr::spread(df, contrast_name, value)
-  rownames(data) = data$gene_name
+  data = data %>%
+    group_by(contrast_name) %>%
+    distinct(gene_name, .keep_all = TRUE) %>%
+    spread(contrast_name,value)
+
+  #data = tidyr::spread(data,contrast_name,value)
+  data <- data.frame(data)
   data = data[,-1]
+  colnames(data) <- gsub(".vs.","-vs-", colnames(data))
   anno = suppressMessages(annotationPulmonDB(id))
-  data_class <- SummarizedExperiment(assays=list(values=as.matrix(data)),
+  data_class <- SummarizedExperiment(assays=as.matrix(data),
                                      colData = anno)
 
   message("Time of processing ",Sys.time()-a)
