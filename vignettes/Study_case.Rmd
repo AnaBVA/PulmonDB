@@ -37,63 +37,15 @@ select_by <- function(data, condition = "Tissue"){
   }
 }
 
-m <- function(x= "PC1", y = PC2, leg = 'none'){
-  Y <- enquo(y)
-  Y <- quo(!! Y)
-  return( glue("{Y[2]}"))
+info_anno_tissue <- function(Data) {
+  anno_tissue <- gse %>%
+  filter(contrast_name %in% colnames(Data)) %>%
+  right_join(CH.H, by = "contrast_name")
 }
 
-m <- function(x= "PC1", y = PC2, leg = 'none'){
-  Y <- enquo(y)
-  Y <- get_expr(Y)
-  return( Y)
-}
+anno_tissue$test2 <- factor(anno_tissue$test2)
+anno_tissue$ref2 <- factor(anno_tissue$ref2)
 
-
-my_plot <- function(df,x=PC1, y =PC2, leg = 'none'){
-  x <- enquo(x)
-  y <- enquo(y)
-  X <- get_expr(x)
-  Y <- get_expr(y)
-  if (str_detect(X,"PC")){
-    title.txt <- glue("PCA of {X} versus {Y}")
-  }
-  else if (str_detect(X,"X")){
-    title.txt <- glue("tSNE of {X} versus {Y}")
-  }
-  ggplot(data = df, aes(x= !! x,
-                        y= !! y,
-                        colour= test2
-                       ),
-                  frame = TRUE,
-                  frame.type = 'norm') +
-  scale_color_manual(values = c("#930404", "#3f7ac6","#0dba79")) +
-  scale_shape_manual(values=seq(1:length(unique(df$experiment_access_id)))) +
-  geom_point(aes(shape=experiment_access_id,
-                 stroke = 1.5
-                 ),
-             colour = "black",
-             size = 4
-             ) +
-  geom_point(alpha=0.8, size = 4) +
-  labs(title = title.txt) +
-  theme(legend.position = leg,
-        text = element_text(size = 20),
-        panel.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.line = element_line(colour = "#292929")
-        )
-}
-
-
-# internet
-g_legend<-function(a.gplot){
-  tmp <- ggplot_gtable(ggplot_build(a.gplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)
-  }
 
 ############# Files
 norm_data <- read_csv("~/Documents/Doctorado/COPD_analysis/data/April_2019/2_pivotdata.txt")
@@ -154,93 +106,31 @@ ggplot(c_anno, aes(x=PACK_PER_YEAR)) + geom_histogram(na.rm = FALSE)
 n_data <- norm_data %>%
   select(c("gene_name",pull(CH.H,contrast_name)))
 
-#quitar contrastes que tienen datos faltantes en en mas de 3/4 de los datos
-s <- summary(colSums(is.na(n_data)))
-Data <- n_data[,colSums(is.na(n_data)) <= s["3rd Qu."]]
-Data <- n_data
-#Data <- Data  %>%
-  filter(gene_name %in% #c("CXCL12","CD83","IGFBP2","OLR1","IGF1","BMP2","IGFBP5","SPOCK2","VEGFC","IL1A","JUND","FUT1","VEGFA","IL6R"))
- # filter(gene_name %in% rownames(red_genesDE))
-
-
-# Keep genes without NAs in all contrast
-Data <- Data[rowSums(is.na(Data)) == 0,] # A tibble: 13,627 x 164
-
-
-anno_tissue <- gse %>%
-  filter(contrast_name %in% colnames(Data)) %>%
-  right_join(CH.H, by = "contrast_name")
-
-anno_tissue$test2 <- factor(anno_tissue$test2)
-anno_tissue$ref2 <- factor(anno_tissue$ref2)
-
 ###########################
-###PCA
-e <- prcomp(t(Data[,-1]))
-rownames(e$x) <- colnames(Data)[-1]
-rownames(e$rotation) <- Data$gene_name
-
-df <- merge(e$x[,1:3], anno_tissue, by.x= 0, by.y=1, all.x=TRUE)
-
-# https://rpubs.com/Cristina_Gil/PCA
-var <- get_pca_var(e)
-var_exp <- fviz_screeplot(e,addlabels = TRUE, ylim = c(0,35), barfill = "#6b0778", barcolor ="white") +
-  labs(title = "Variances in PCA components",x = "Principal Components", y = "Variance (%)") +
-  theme(text = element_text(size = 18),
-        axis.text.x= element_text(margin = margin(3,1,1,1)),
-        plot.margin = unit(c(3,1,1,1),"lines"),
-                panel.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()
-        )
-
-contri_var <- fviz_contrib(e,choice = "var", axes = 1, top = 20,  fill = "#076b78", color ="white") +
-  labs(title = "Contribution of variables in PC1") +
-  #theme_minimal(18) +
-  theme(text = element_text(size = 18),
-        axis.text.x= element_text(angle=45, 
-                                  margin = margin(1,1,1,1)),
-        plot.margin = unit(c(3,1,0.5,1),"lines"),
-        panel.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()
-        )
-
-############### TSNE
-#install.packages('Rtsne')
-
-tsne <- Rtsne(as.matrix(t(Data[,-1])), dims = 3, check_duplicates = FALSE)
-tsne_data <- data.frame(tsne$Y)
-rownames(tsne_data) <- colnames(Data)[-1]
-tsne_data <- merge(tsne_data,df,by.x = 0, by.y = 1, all.x = TRUE)
-
+# Dimention reduction analyisis with PCA and tSNE
 ############### 
 #autoplot(e, data = df, colour = "test2")
 #p3 <- plot_ly(df, x = ~PC2, y = ~PC3, color = ~test2)
 
-tpca_12 <- my_plot(df,PC1,PC2)
-tpca_23 <- my_plot(df,PC2,PC3)
-ttsne <- my_plot(tsne_data,X1,X2)
+# All contrasts
+Data <- n_data
+# Genes without NAs in all contrast
+Data <- Data[rowSums(is.na(Data)) == 0,] # A tibble: 399  x 217
+anno_tissue <- info_anno_tissue(Data)
+dim_reduction_analysis(Data,anno_tissue)
 
-legend <- g_legend(my_plot(df,PC1,PC2,"right"))
+
+#quitar contrastes que tienen datos faltantes en en mas de 3/4 de los datos
+s <- summary(colSums(is.na(n_data)))
+Data <- n_data[,colSums(is.na(n_data)) <= s["3rd Qu."]]
+
+# Genes without NAs in all contrast
+Data <- Data[rowSums(is.na(Data)) == 0,] # A tibble: 13,627 x 164
+# PCA and tSNE
+anno_tissue <- info_anno_tissue(Data)
+dim_reduction_analysis(Data,anno_tissue)
 
 
-# pdf 20 x 10 
-# pdf 12 x 12
- grid.arrange(tpca_12,
-             ttsne,
-             tpca_23,
-             legend,
-             var_exp,
-             contri_var,
-             heights = c(2.7,2.7,2),
-             layout_matrix = rbind(c(1,2),
-                                   c(3,4),
-                                   c(5,6))
-             )
-
-              #layout_matrix = rbind(c(1,1,2,2,3,3),
-               #                    c(4,4,4,5,5,5))
 
 ###########################
 anno_tissue$test2 <-  as.factor(gsub("HEALTHY/CONTROL","CONTROL",anno_tissue$test2))
@@ -366,6 +256,11 @@ ggarrange(gDE,gS,
 
 
 
+Data <- Data %>%
+  filter(gene_name %in% rownames(red_genesDE)) # 54 x 217
+
+anno_tissue <- info_anno_tissue(Data)
+dim_reduction_analysis(Data,anno_tissue)
 
 ##############################################
 
