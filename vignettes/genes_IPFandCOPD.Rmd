@@ -1,0 +1,273 @@
+---
+title: "Similar and DE genes in COPD and IPF"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(ggrepel)
+library(plotly)
+library(ggpubr)
+library(limma)
+library(PulmonDB)
+library(magrittr)
+library(ggfortify)
+library(gridExtra)
+library(Rtsne)
+library(glue)
+library(factoextra)
+library(rlang)
+library(grid)
+library(gridExtra)
+
+```
+
+
+
+
+```{r include=FALSE}
+
+############# local functions
+#############
+#############
+# this script also needs dim_reduction_analysis.R 
+# it contains the dim_reduction_analysis() function used here.
+#############
+#############
+select_by <- function(data, condition = "Tissue"){
+  if (condition == "Tissue"){
+    data %>%
+      group_by(contrast_name) %>%
+      filter(condition_node_name == "LUNG_BIOPSY") %>%
+      distinct("contrast_name",.keep_all = TRUE) %>%
+      select(1,2)
+  }
+  else if (condition == "Disease") {
+    data %>%
+      group_by(contrast_name) %>%
+      filter(parent_node_id == 87 )  %>%
+      distinct("contrast_name",.keep_all = TRUE) %>%
+      select(1,2)
+  }
+}
+
+info_anno_tissue <- function(Data) {
+  anno_tissue <- gse %>%
+    filter(contrast_name %in% colnames(Data)) %>%
+    right_join(CH.H, by = "contrast_name")
+}
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r echo=FALSE}
+
+
+############# Files
+path = "~/Documents/Doctorado/Data/Output_PulmonDB/April_2019/"
+
+
+norm_data <- read_csv(str_c(path,"2_pivotdata.txt"))
+norm_data[,-which(colSums(is.na(norm_data)) == nrow(norm_data))]  # Remove columns with all NA
+
+gse <- read_tsv(str_c(path,"gse_gpl.txt"))
+
+c.anno <- read_tsv(str_c(path,"contrast_conditions.txt")) %>%
+  group_by(contrast_name)
+
+r.anno <- read_tsv(str_c(path,"ref_conditions.txt")) %>%
+  group_by(contrast_name)
+
+
+
+############# Select disease information
+c.disease <- select_by(c.anno,"Disease")
+r.disease <- select_by(r.anno, "Disease")
+
+## Select tissue
+r.tissue <- select_by(r.anno, "Tissue")
+r.disease <- filter(r.disease, contrast_name %in% r.tissue$contrast_name)
+
+
+############# Merge data
+pheno <- right_join(c.disease,r.disease, by = "contrast_name") %>%
+  set_colnames(c("contrast_name","test","ref")) %>% 
+  mutate(test = coalesce(test,ref))
+
+############# Select Disease
+CH.H <- pheno %>%
+  filter(ref == "HEALTHY/CONTROL") %>% #| ref == "MATCH_TISSUE_CONTROL") %>%
+  filter(test=="COPD"| test=="AAD"| test=="EMPHYSEMA" | test=="HEALTHY/CONTROL"| test == "MATCH_TISSUE_CONTROL" | test == "IPF") %>%
+  mutate(
+    test2 = str_replace(test,"AAD|EMPHYSEMA","COPD"),
+    ref2 = str_replace(ref,"HEALTHY/CONTROL|MATCH_TISSUE_CONTROL","CONTROL")
+  )
+
+ref_anno <- r.anno %>%
+  select(-parent_node_id) %>%
+  spread(condition_node_name, 2) %>%
+  filter(contrast_name %in% CH.H$contrast_name)
+
+c_anno <- c.anno %>%
+  select(-parent_node_id) %>%
+  spread(condition_node_name, delta_value) %>%
+  filter(contrast_name %in% CH.H$contrast_name)
+
+# plot histograms
+
+c_anno$AGE_PER_INDIVIDUAL <- as.numeric(c_anno$AGE_PER_INDIVIDUAL)
+c_anno$PACK_PER_YEAR <- as.numeric((c_anno$PACK_PER_YEAR))
+```
+
+
+```{r}
+n_data <- norm_data %>%
+  select(c("gene_name",pull(CH.H,contrast_name)))
+
+###########################
+
+# All contrasts
+Data <- n_data
+# Genes without NAs in all contrast
+Data <- Data[rowSums(is.na(Data)) == 0,] # A tibble: 399  x 217
+anno_tissue <- info_anno_tissue(Data)
+
+#quitar contrastes que tienen datos faltantes en en mas de 3/4 de los datos
+s <- summary(colSums(is.na(n_data)))
+Data <- n_data[,colSums(is.na(n_data)) <= s["3rd Qu."]] # A tibble: 19881 x  164
+
+# Genes without NAs in all contrast
+Data <- Data[rowSums(is.na(Data)) == 0,] # A tibble: 13,627 x 164
+anno_tissue <- info_anno_tissue(Data)
+
+
+```
+
+
+```{r}
+
+########################### Limma
+anno_tissue$test2 <-  as.factor(gsub("HEALTHY/CONTROL","CONTROL",anno_tissue$test2))
+
+#designS <- model.matrix(~0 +d + experiment_access_id,gsetm)
+designDE <- model.matrix(~0 + test2 + experiment_access_id ,anno_tissue)
+
+### data
+D <- data.frame(Data)
+rownames(D) <- D[,1]
+D <- D[-1]
+colnames(D) <-  gsub(".vs.","-vs-",colnames(D))
+
+# Model
+fitDE <- lmFit(as.matrix(D),designDE)
+#fitDE <- lmFit(assay(g),designDE)
+
+
+cont.matrixDE <- makeContrasts(COPDvsIPF=test2COPD-test2IPF,
+                               COPDvsH =test2COPD-test2CONTROL,
+                               IPFvsH = test2IPF-test2CONTROL,
+                               COPDandIPFvsH = (test2COPD + test2IPF)/2 -test2CONTROL,
+                               levels = designDE)
+
+#cont.matrixDE <- makeContrasts(P3=testCOPD-testIPF,
+# levels = designDE)
+fit2DE <- contrasts.fit(fitDE,cont.matrixDE)
+fit3DE <- eBayes(fit2DE)
+dtDE <- decideTests(fit3DE)
+summary(dtDE)
+
+genesCOPDvsH <- topTable(fit3DE,coef=2,n = Inf, adjust="fdr", p = 0.005, sort.by = "B")
+genesIPFvsH <- topTable(fit3DE,coef=3,n = Inf, adjust="fdr", p = 0.005, sort.by = "B")
+
+genesSIMILAR <-  topTable(fit3DE,coef=4,n = 20, adjust="fdr", p = 0.005, sort.by = "logFC")
+genesSIMILAR_p <-  topTable(fit3DE,coef=4, n = Inf,adjust="fdr", p = 0.005, sort.by = "logFC")
+genesSIMILAR_all <- topTable(fit3DE,coef=4,n = Inf, adjust="fdr", sort.by = "logFC")
+
+
+genesCOPDvsIPF <- topTable(fit3DE,coef=1,n = 20, adjust="fdr", p = 0.005, sort.by = "logFC")
+genesCOPDvsIPF_p <- topTable(fit3DE,coef=1,n = Inf, adjust="fdr", p = 0.005, sort.by = "logFC")
+genesCOPDvsIPF_all <- topTable(fit3DE,coef=1,n = Inf, adjust="fdr", sort.by = "logFC")
+
+
+
+```
+
+
+```{r}
+
+dt <- cbind(decideTests(fit3DE[,"COPDvsIPF"]),decideTests(fit3DE[,"COPDandIPFvsH"]))
+ds <- cbind(decideTests(fit3DE[,"COPDvsH"]),decideTests(fit3DE[,"IPFvsH"]))
+
+
+colnames(dt) <- c("Similar genes", "DE genes")
+
+#pdf("fig_output/VennSimilarDE.pdf")
+vennDiagram(dt, circle.col=c("#09b7a2", "#096cb7"))
+#dev.off()
+
+summary(decideTests(fit3DE))
+
+###Volcano limma plot
+
+#SIMILAR
+red_genesS <- topTable(fit3DE,coef=4,n = Inf, adjust="fdr", p = 0.005, sort.by = "logFC")
+
+gS <-  ggplot(data=genesSIMILAR_all, aes(x=logFC, y=-log10(adj.P.Val))) + 
+  geom_point(alpha=0.7, size=1.75) +
+  xlab("log(Fold-Change)") + 
+  ylab("-log10 FDR(p-value)") +
+  ggtitle("Similar genes between COPD and IPF") +
+  geom_point(color=ifelse(rownames(genesSIMILAR_all) %in% rownames(red_genesS), "red","black")) +
+  #geom_vline(xintercept=1, linetype="dashed", color = "red") +
+  #geom_vline(xintercept = -1, linetype="dashed", color = "red") +
+  geom_hline(yintercept = -log10(0.005), linetype="dashed", color = "red") +
+  geom_text_repel(data = genesSIMILAR, 
+                  aes(genesSIMILAR$logFC, -log10(genesSIMILAR$adj.P.Val), label = rownames(genesSIMILAR)),
+                  check_overlap = TRUE,
+                  size = 3,
+                  position = position_dodge(0.9)
+  ) +
+  theme_bw(24)
+
+#DE
+red_genesDE <- topTable(fit3DE,coef=1,n = Inf, adjust="fdr", p = 0.005, sort.by = "logFC")
+
+gDE <-  ggplot(data=genesCOPDvsIPF_all, aes(x=logFC, y=-log10(adj.P.Val))) + 
+  geom_point(alpha=0.7, size=1.75) +
+  xlab("log(Fold-Change)") + 
+  ylab("-log10 FDR(p-value)") +
+  ggtitle("DE genes between COPD and IPF") +
+  geom_point(color=ifelse(rownames(genesCOPDvsIPF_all) %in% rownames(red_genesDE), "red","black")) +
+  #geom_vline(xintercept=1, linetype="dashed", color = "red") +
+  #geom_vline(xintercept = -1, linetype="dashed", color = "red") +
+  geom_hline(yintercept = -log10(0.005), linetype="dashed", color = "red") +
+  geom_text_repel(data = genesCOPDvsIPF, 
+                  aes(genesCOPDvsIPF$logFC, -log10(genesCOPDvsIPF$adj.P.Val), label = rownames(genesCOPDvsIPF)),
+                  check_overlap = TRUE,
+                  size = 3,
+                  position = position_dodge(0.9)
+  ) +
+  theme_bw(24)
+
+
+
+### Put together the volcano plots 
+#pdf("fig_output/volcano_plots.pdf",height = 8, width = 18 )
+ggarrange(gDE,gS,
+          ncol = 2,
+          nrow = 1,
+          align = "hv"
+)
+#dev.off()
+
+
+```
+
+
+
