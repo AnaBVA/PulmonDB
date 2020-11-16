@@ -156,11 +156,11 @@ annotationPulmonDB = function(id,output = "contrast"){
     s = paste(s,da[which(da$delta_value!=1),3],sep = ":")
     da[which(da$delta_value!=1),1] = s
 
-    d = da %>%
+    d = suppressMessages(da %>%
       group_by(contrast_name,parent) %>%
-      suppressMessages(dplyr::summarise(kids = last(cond_property_id))) # alternative use nth(,1))
+      dplyr::summarise(kids = last(cond_property_id))) # alternative use nth(,1))
 
-    ta = spread(data = d,
+    ta = tidyr::spread(data = d,
                 key = "parent",
                 value = "kids")
     return(ta)
