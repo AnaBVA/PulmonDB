@@ -158,7 +158,7 @@ annotationPulmonDB = function(id,output = "contrast"){
 
     d = da %>%
       group_by(contrast_name,parent) %>%
-      summarise(kids = last(cond_property_id)) # alternative use nth(,1)
+      suppressMessages(dplyr::summarise(kids = last(cond_property_id))) # alternative use nth(,1))
 
     ta = spread(data = d,
                 key = "parent",
@@ -181,7 +181,7 @@ annotationPulmonDB = function(id,output = "contrast"){
   sim = colnames(ref)[which(colnames(ref) %in% colnames(con))]
   for (i in 1:length(sim)){
     c = con[!is.na(con[,sim[i]]),]
-    ref[ref$contrast_name %in% c$contrast_name,sim[i]] <- con[!is.na(con[,sim[i]]),sim[i]]
+    ref[ref$contrast_name %in% c$contrast_name,sim[i]] <- suppressMessages(type_convert(con[!is.na(con[,sim[i]]),sim[i]]))
   }
   #Matrix con annotacion de los test
   con = as.data.frame(ref)
@@ -198,12 +198,11 @@ annotationPulmonDB = function(id,output = "contrast"){
   data_anno[,'gsm'] <- rownames(ref)
   gse_gpl <- unique(
     anno_ref[,c("contrast_name","experiment_access_id","platform_name")])
-  g <- dplyr::group_by(gse_gpl,contrast_name)
-  gse_gpl <- data.frame(summarise(
-    g,
-    first(platform_name),
-    first(experiment_access_id))
-    )
+
+  gse_gpl <- as_tibble(gse_gpl) %>%
+    dplyr::group_by(contrast_name) %>%
+    suppressMessages(dplyr::summarise(dplyr::first(platform_name), dplyr::first(experiment_access_id)))
+
   data_anno <- merge(data_anno,gse_gpl,by.x="gsm",by.y="contrast_name")
   rownames(data_anno) <- data_anno[,"gsm"]
   data_anno <- data_anno[,-1]
@@ -237,3 +236,4 @@ annotationPulmonDB = function(id,output = "contrast"){
 
 
 }
+
