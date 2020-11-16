@@ -30,7 +30,6 @@
 #' @importFrom ontologyIndex ontology_index
 #' @importFrom magrittr "%>%"
 #' @importFrom plyr revalue
-#' @importFrom readr type_convert
 #' @return This is the result.
 #' @examples
 #' ## Annotation per contrast
@@ -176,13 +175,13 @@ annotationPulmonDB = function(id,output = "contrast"){
   }
 
   # Se sobre escribe la matrix de ref con los datos de Contrasts
-  ref <- pivot.anno(anno_ref) # se obtiene para tener datos faltantes
-  con <- pivot.anno(anno_con)
+  ref <- suppressMessages(pivot.anno(anno_ref)) # se obtiene para tener datos faltantes
+  con <- suppressMessages(pivot.anno(anno_con))
 
   sim = colnames(ref)[which(colnames(ref) %in% colnames(con))]
   for (i in 1:length(sim)){
     c = con[!is.na(con[,sim[i]]),]
-    ref[ref$contrast_name %in% c$contrast_name,sim[i]] <- suppressMessages(readr::type_convert(con[!is.na(con[,sim[i]]),sim[i]]))
+    ref[ref$contrast_name %in% c$contrast_name,sim[i]] <- con[!is.na(con[,sim[i]]),sim[i]] # read::type_convert()
   }
   #Matrix con annotacion de los test
   con = as.data.frame(ref)

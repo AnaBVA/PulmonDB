@@ -20,15 +20,6 @@ vignette: >
 ---
 
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
-
-
-
 # Background
 
 PulmonDB is a gene expression database with Chronic Obstructive Pulmonary Diseases (COPD) and Idiopathic Pulmonary Disease (IPF) experiments. It has homogenized values using individual contrast and manual curated annotation that can be download or accessed by http://pulmondb.liigh.unam.mx. 
