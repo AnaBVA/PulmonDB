@@ -30,6 +30,7 @@
 #' @importFrom ontologyIndex ontology_index
 #' @importFrom magrittr "%>%"
 #' @importFrom plyr revalue
+#' @importFrom readr type_convert
 #' @return This is the result.
 #' @examples
 #' ## Annotation per contrast
@@ -181,7 +182,7 @@ annotationPulmonDB = function(id,output = "contrast"){
   sim = colnames(ref)[which(colnames(ref) %in% colnames(con))]
   for (i in 1:length(sim)){
     c = con[!is.na(con[,sim[i]]),]
-    ref[ref$contrast_name %in% c$contrast_name,sim[i]] <- suppressMessages(type_convert(con[!is.na(con[,sim[i]]),sim[i]]))
+    ref[ref$contrast_name %in% c$contrast_name,sim[i]] <- suppressMessages(readr::type_convert(con[!is.na(con[,sim[i]]),sim[i]]))
   }
   #Matrix con annotacion de los test
   con = as.data.frame(ref)
